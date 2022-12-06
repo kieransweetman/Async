@@ -16,13 +16,27 @@ let buildUrl = (city) =>{
     return `http://api.waqi.info/feed/${city}/?token=${k1}`
 }
 
-async function request() {
-    let url = buildUrl('Paris');
+async function request(city) {
+    let url = buildUrl(city);
     const req = await fetch(url)
+
+    if (!req.ok) {
+        const message = `An error has occured: ${req.status}`;
+        throw new Error(message);
+      }
+
     let data = await req.json();
     return data;    
 };
 
-const city = await request();
+const city = await request().catch(error => {
+    error.message;
+});
 
-console.log(city);
+async function printCities(){
+
+    cities.forEach(async city=>{
+        let req = await request(city);
+        console.log(req);
+    })
+}
