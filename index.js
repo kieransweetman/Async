@@ -1,13 +1,13 @@
 "use strict";
 import { k1, k2 } from "./config.js";
 
+
 const map = L.map('map').setView([46.2276, 2.2137], 6);
 
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19,
     attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
 }).addTo(map);
-
 
 let options = {
     
@@ -20,7 +20,7 @@ let options = {
 
 ///////////////////
 
-// villes par population en ordre
+
 
 // donnees
 const cities = [['Paris','75056'], ['Marseille','13055'], ['Lyon','69123'], ['Toulouse','31555'], ['Nice', '06088'], ['Nantes','44109'], ['Montpellier','34172'], ['Strasbourg','67482'],[ 'Bordeaux','33063'],[ 'Lille' ,'59350']]
@@ -116,7 +116,51 @@ const weatherCodes = {
 }
 const elements = ['o3', 'pm25', 'pm10', 'no2', 'so2', 'co'];
 
-/////////////
+// User search
+let input = document.querySelector("input#city")
+let submit = document.querySelector('input[type=submit]')
+
+function buildCityUrl(city){
+    return `https://geo.api.gouv.fr/communes?nom=${city}`
+}
+async function cityReq(city){
+    let url = buildCityUrl(city);
+    const req = await fetch(url, options)
+
+    if (!req.ok) {
+        const message = `An error has occured: ${req.status}`;
+        throw new Error(message);
+      }
+
+    let data = await req.json();
+    return data;    
+
+}
+
+submit.addEventListener('click' ,(e)=>{
+    e.preventDefault();
+    let city = input.value;
+    console.log(cityReq(city));
+    cityReq(city)
+    .then(data => getInsee(data, city))
+    .then(code=>{console.log(code)});
+})
+
+function getInsee(data, city){
+    let code = ''
+    if(data[0].nom.toLowerCase() === city.toLowerCase()){
+       code += data[0].code
+    }
+    return code;
+}
+
+
+
+
+
+
+
+///
 
 let airQualityUrl = (city) =>{
     return `http://api.waqi.info/feed/${city}/?token=${k1}`
@@ -140,8 +184,10 @@ async function requestMeteo(city) {
     return data;    
 };
 
-async function printCities(){
-
+async function printCities(toPrint = null){
+    if(toPrint != null){
+        
+    }
     cities.forEach(async city=>{
         let airQuality = await requestAirQuality(city[0]);
         let airData = await airQuality.data;
@@ -169,7 +215,6 @@ function parseWeather(day){
   console.log(day);
   let code = Object.keys(weatherCodes);
   code = code.map(x => Number(x));
-console.log(code);
    
    if(day === code[0]){
     weather += '<i class="wi wi-day-sunny wi-fw"></i>';
@@ -283,6 +328,8 @@ function airQualityMarker(aqi){
     return color;
     
 }
+
+// main
 
 await printCities();
 
